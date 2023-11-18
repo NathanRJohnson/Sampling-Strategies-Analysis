@@ -112,10 +112,10 @@ def main():
   nb_sampler = SamplingNB()
 
   new_points = nb_sampler.generate(features, labels, target_label=4, points_wanted=6800, 
-                                   guassian_cols=slice(1, 11), bernoulli_cols=slice(12, -2))
-  
-  print(new_points)
+                                   guassian_cols=slice(0, 11), bernoulli_cols=slice(12, -2))
 
+  pd.DataFrame.to_csv(new_points, '../data/sampled/naive_bayes.csv', index=False)
+  
 
 if __name__ == '__main__':
   main()

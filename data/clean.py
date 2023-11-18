@@ -19,7 +19,7 @@ def main():
 
   # remove any columns with all zeros (they don't provide any information)
   reduced_df = reduced_df.loc[:, (reduced_df != 0).any(axis=0)]
-  pd.DataFrame.to_csv(reduced_df, 'covertype.csv')
+  pd.DataFrame.to_csv(reduced_df, 'covertype.csv', index=False)
 
 if __name__ == '__main__':
   main()
