@@ -8,6 +8,7 @@ import math
 import matplotlib.pyplot as plt
 from scipy import stats
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import MinMaxScaler
 import sys
 import argparse
 
@@ -56,8 +57,9 @@ class Generator(nn.Module):
         return self.model(data)
     
 
-def prepData(data, labels, batch_size):
+def prepData(data, labels, batch_size, scaler):
     labels = np.array(labels)
+    data = scaler.fit_transform(data)
     dataset = [(data[i], labels[i]) for i in range(len(data))]
     return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
@@ -104,15 +106,16 @@ def main():
     print(batch_size)
     minority_train_x = np.array(minority_train_x)
     minority_test_x = np.array(minority_test_x)
-    train_x = prepData(minority_train_x, minority_train_labels, batch_size)
-    test_x = prepData(minority_test_x, minority_test_labels, batch_size)
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    train_x = prepData(minority_train_x, minority_train_labels, batch_size, scaler)
+    test_x = prepData(minority_test_x, minority_test_labels, batch_size, scaler)
     disc = Discriminator()
     gen = Generator()
 
     num_of_batches = len(train_x)
     print("number of batches: ", len(train_x))
-    lr = 0.0005
-    epochs = 250
+    lr = 0.0001
+    epochs = 200
     loss_fn = nn.BCELoss()
     opt_disc = torch.optim.Adam(disc.parameters(), lr=lr)
     opt_gen = torch.optim.Adam(gen.parameters(), lr=lr)
@@ -166,8 +169,9 @@ def main():
     while len(subset_labels[subset_labels == inputs.minority])< len(subset_labels[subset_labels == inputs.majority]):
         sample_spaces = torch.randn((batch_size, 53))
         gen_data = gen(sample_spaces)
+        gen_data = scaler.inverse_transform(gen_data.detach().numpy())
         subset_labels = pd.concat([subset_labels,pd.Series(inputs.minority, index=range(len(gen_data)))])
-        subset_data = np.concatenate((subset_data,gen_data.detach().numpy()))
+        subset_data = np.concatenate((subset_data,gen_data))
     subset_data_df = pd.DataFrame(subset_data, columns =minority_class_data.columns)
     subset_data_df[inputs.label] = subset_labels.values
     subset_data = subset_data[:len(subset_labels[subset_labels == inputs.majority])*2] #removing the excess minority samples created.
@@ -175,6 +179,7 @@ def main():
     
     subset_data_df.to_csv(inputs.output)
     
+    '''
     #testing with randomforest
     new_train_x, new_test_x,  = train_test_split(subset_data_df, test_size = 0.25, random_state=10)
     randForest = RandomForestClassifier()
@@ -185,10 +190,10 @@ def main():
     
     
     
-    
-    gen_data = gen_data.detach()
+    print(len(gen_data))
     sample, i = next(iter(train_x)) 
-
+    sample = scaler.inverse_transform(sample)
+    
     fig, ax = plt.subplots(2, 2)
     ax[0,0].scatter(gen_data[:,0], gen_data[:,1])
     ax[0,0].scatter(sample[:,0], sample[:,1])
@@ -217,7 +222,7 @@ def main():
     fig.suptitle("Real Vs. Generated Data")
     fig.tight_layout()
     plt.show()
-    
+    '''
 
 if __name__ == '__main__':
     main()
