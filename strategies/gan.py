@@ -28,7 +28,7 @@ class Discriminator(nn.Module):
     def __init__(self):
         super().__init__()
         self.model = nn.Sequential(
-            nn.Linear(53, 256),
+            nn.Linear(27, 256),
             nn.ReLU(),
             nn.Dropout(0.3),
             nn.Linear(256, 128),
@@ -46,11 +46,11 @@ class Generator(nn.Module):
     def __init__(self):
         super().__init__()
         self.model = nn.Sequential(
-            nn.Linear(53, 106),
+            nn.Linear(27, 106),
             nn.ReLU(),
             nn.Linear(106, 212),
             nn.ReLU(),
-            nn.Linear(212, 53),
+            nn.Linear(212, 27),
         )
         
     def forward(self, data):
@@ -71,15 +71,15 @@ def main():
     torch.manual_seed(10)
 
     #Creating the dataframe to hold the data from covtype.data
-    WA_columns = ['wilderness_A_' + str(x + 1) for x in range(4)]
-    soil_columns = ['soil_T_' + str(x + 1) for x in range(40)]
+    # WA_columns = ['wilderness_A_' + str(x + 1) for x in range(4)]
+    # soil_columns = ['soil_T_' + str(x + 1) for x in range(40)]
 
-    columns = ["elevation", "aspect", "slope", "hydro_horizontal_dist", "hydro_vertical_dist", "road_horizontal_dist" "shade_9am", "shade_noon", "shade_3pm", "firepoints_horizontal_dist"] + WA_columns + soil_columns + ["cover_type"]
+    # columns = ["elevation", "aspect", "slope", "hydro_horizontal_dist", "hydro_vertical_dist", "road_horizontal_dist" "shade_9am", "shade_noon", "shade_3pm", "firepoints_horizontal_dist"] + WA_columns + soil_columns + ["cover_type"]
 
-    whole_dataset = pd.read_csv(path_to_input, header=None, names=columns)
+    # whole_dataset = pd.read_csv(path_to_input, header=None, names=columns)
 
-    subset_data = pd.concat([whole_dataset[whole_dataset[inputs.label] == inputs.majority], whole_dataset[whole_dataset[inputs.label] == inputs.minority]]).reset_index().drop(columns=['index'])
-    minority_class_data = whole_dataset[whole_dataset[inputs.label] == inputs.minority].reset_index().drop(columns=['index'])
+    subset_data = pd.read_csv(path_to_input)
+    minority_class_data = subset_data[subset_data[inputs.label] == inputs.minority].reset_index(drop=True)
 
     print("# of samples with ",inputs.label, " ", inputs.minority, ": ", len(subset_data[subset_data[inputs.label] == inputs.minority]))
     print("# of samples with ", inputs.label, " ", inputs.majority, ": ", len(subset_data[subset_data[inputs.label] == inputs.majority]))
@@ -125,7 +125,7 @@ def main():
             true_data = true_data.float()
             # Data for training the discriminator
             true_data_labels = torch.zeros((batch_size, 1))
-            sample_spaces = torch.randn((batch_size, 53))
+            sample_spaces = torch.randn((batch_size, np.shape(subset_data)[1]))
             gen_data = gen(sample_spaces)
             gen_data_labels = torch.ones((batch_size, 1))
             all_data = torch.cat((true_data, gen_data))
@@ -142,7 +142,7 @@ def main():
             opt_disc.step()
 
             # Data for training the generator
-            sample_spaces = torch.randn((batch_size, 53))
+            sample_spaces = torch.randn((batch_size, np.shape(subset_data)[1]))
 
             # Training the generator
             gen.zero_grad()
@@ -164,10 +164,10 @@ def main():
     #Evaluating performance of generator
     #Creates a batch of samples using generator then compares it to batches of real data.
     #Compares each column/feature using the ttest. Plots the p value on a graph with 0.05 line drawn
-    sample_spaces = torch.randn((batch_size, 53))
+    sample_spaces = torch.randn((batch_size, np.shape(subset_data)[1]))
     gen_data = gen(sample_spaces)
     while len(subset_labels[subset_labels == inputs.minority])< len(subset_labels[subset_labels == inputs.majority]):
-        sample_spaces = torch.randn((batch_size, 53))
+        sample_spaces = torch.randn((batch_size, np.shape(subset_data)[1]))
         gen_data = gen(sample_spaces)
         gen_data = scaler.inverse_transform(gen_data.detach().numpy())
         subset_labels = pd.concat([subset_labels,pd.Series(inputs.minority, index=range(len(gen_data)))])
@@ -177,7 +177,7 @@ def main():
     subset_data = subset_data[:len(subset_labels[subset_labels == inputs.majority])*2] #removing the excess minority samples created.
     print(inputs.minority, ": ", len(subset_data_df[subset_data_df[inputs.label] == inputs.minority]), inputs.majority,": ", len(subset_data_df[subset_data_df[inputs.label] == inputs.majority]))
     
-    subset_data_df.to_csv(inputs.output)
+    subset_data_df.to_csv(inputs.output, index=False)
     
     '''
     #testing with randomforest
