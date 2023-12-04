@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
+import sys
+import argparse
 
 class SamplingNB:
   def __init__(self):
@@ -12,7 +13,7 @@ class SamplingNB:
     self.points_wanted = points_wanted
     self.target_label = target_label
 
-    target_name = labels.name  #
+    target_name = labels.name
     targets = labels.to_numpy()
   
     g_features = features.iloc[:, guassian_cols] 
@@ -103,18 +104,31 @@ class SamplingNB:
     return final_points
 
 
-# example usage
+# example usage -- oversampling
 def main():
-  covertype = pd.read_csv('../data/covertype.csv')
-  features = covertype.iloc[:, :-1]
-  labels = covertype.iloc[:, -1]
+  path_to_input = sys.argv[1]
+  flag_args = sys.argv[2:]
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-l', '--label', help='Column name of the label')
+  parser.add_argument('-m', '--minority', type=int, help='Label value of the minority class')
+  parser.add_argument('-M', '--majority', type=int, help='Label value of the majority class')
+  parser.add_argument('-o', '--output', help='File name for the ouput class')
+  args = parser.parse_args(flag_args)
+
+  df = pd.read_csv(path_to_input)
+  features = df.iloc[:, :-1]
+  labels = df.iloc[:, -1]
+  points = len(df[df[args.label] == args.minority])
 
   nb_sampler = SamplingNB()
 
-  new_points = nb_sampler.generate(features, labels, target_label=4, points_wanted=6800, 
-                                   guassian_cols=slice(0, 11), bernoulli_cols=slice(12, -2))
+  new_minority = nb_sampler.generate(features, labels, target_label=args.minority, points_wanted=points, 
+                                   guassian_cols=slice(0, 10), bernoulli_cols=slice(10, 28))
 
-  pd.DataFrame.to_csv(new_points, '../data/sampled/naive_bayes.csv', index=False)
+  majority = df[df[args.label] == args.majority]
+  balanced_data = pd.concat([majority, new_minority])
+  
+  pd.DataFrame.to_csv(balanced_data, args.output, index=False)
   
 
 if __name__ == '__main__':
