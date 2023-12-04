@@ -178,13 +178,13 @@ def main():
     #testing with randomforest
     new_train_x, new_test_x,  = train_test_split(subset_data_df, test_size = 0.25, random_state=10)
     randForest = RandomForestClassifier()
-    randForest.fit(new_train_x.drop(columns=inputs.labels), new_train_x[inputs.label])
+    randForest.fit(new_train_x.drop(columns=inputs.label), new_train_x[inputs.label])
     print("Random forest classifier score before balancing: ", imbalanced_random_forest_score)
-    print("Random forest classifier score after balancing: ",randForest.score(new_test_x.drop(columns=inputs.labels), new_test_x[inputs.label]))
+    print("Random forest classifier score after balancing: ",randForest.score(new_test_x.drop(columns=inputs.label), new_test_x[inputs.label]))
     
     
     
-    '''
+    
     
     gen_data = gen_data.detach()
     sample, i = next(iter(train_x)) 
@@ -217,7 +217,7 @@ def main():
     fig.suptitle("Real Vs. Generated Data")
     fig.tight_layout()
     plt.show()
-    '''
+    
 
 if __name__ == '__main__':
     main()
