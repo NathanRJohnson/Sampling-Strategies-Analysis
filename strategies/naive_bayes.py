@@ -69,6 +69,7 @@ class SamplingNB:
   def __bernoulli(self, features, targets):
     X_train, x_test, y_train, y_test = train_test_split(features, targets, test_size=0.2)
 
+    print("train: ", X_train, "train: ", y_train)
     clf = BernoulliNB()
     clf.fit(X_train, y_train)
 
@@ -120,6 +121,7 @@ def main():
   labels = df.iloc[:, -1]
   points = len(df[df[args.label] == args.minority])
 
+  #print("features: ", features, "labels: ", labels, "points: ", points)
   nb_sampler = SamplingNB()
 
   new_minority = nb_sampler.generate(features, labels, target_label=args.minority, points_wanted=points, 
