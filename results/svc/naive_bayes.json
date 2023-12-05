@@ -1,1 +1,0 @@
-{"accuracy": {"no_sample": [0.9448123620309051], "nearest_neighbor": [0.4144916244643553], "undersampling": [0.8600181794572134], "naive_bayes": [0.9402674977275679]}, "fscore": {"no_sample": [0.5063879210220673], "nearest_neighbor": [0.19265890778871977], "undersampling": [0.4812319538017325], "naive_bayes": [0.4772727272727273]}}

@@ -45,36 +45,27 @@ def SMOTE(X_data, oversampling_needed, K, majority_len):
 
 def main():
     path_to_input, inputs=parse_args()
-    print(inputs )
-    #Creating the dataframe to hold the data from covtype.data
-    WA_columns = ['wilderness_A_' + str(x + 1) for x in range(4)]
-    soil_columns = ['soil_T_' + str(x + 1) for x in range(40)]
+    print(inputs)
+    
+    dataset = pd.read_csv(path_to_input)
 
-    columns = ["elevation", "aspect", "slope", "hydro_horizontal_dist", "hydro_vertical_dist", "road_horizontal_dist" "shade_9am", "shade_noon", "shade_3pm", "firepoints_horizontal_dist"] + WA_columns + soil_columns + ["cover_type"]
+    minority = dataset[dataset[inputs.label] == inputs.minority].reset_index(drop=True)
+    majority = dataset[dataset[inputs.label] == inputs.majority].reset_index(drop=True)
 
-    whole_dataset = pd.read_csv(path_to_input, header=None, names=columns)
-
-    subset_data = pd.concat([whole_dataset[whole_dataset[inputs.label] == inputs.majority], whole_dataset[whole_dataset[inputs.label] == inputs.minority]]).reset_index().drop(columns=['index'])
-    minority_class_data = whole_dataset[whole_dataset[inputs.label] == inputs.minority].reset_index().drop(columns=['index'])
-
-    majority_len = len(subset_data[subset_data[inputs.label] == inputs.majority])
-    minority_len = len(subset_data[subset_data[inputs.label] == inputs.minority])
+    majority_len = len(majority)
+    minority_len = len(minority)
     print("# of samples with ",inputs.label, " ", inputs.minority, ": ", minority_len)
     print("# of samples with ", inputs.label, " ", inputs.majority, ": ", majority_len)
 
-    #subset_labels = subset_data[inputs.label]
-    #minority_class_labels = minority_class_data[inputs.label]
-    
-
     samples_needed = int(majority_len/minority_len)#ex. 12 means 12 times # of minority class
     neighbours = 5 #number of neighbours to use
-    sampled_instances = SMOTE(minority_class_data, samples_needed, neighbours, majority_len)
-    balanced_set =pd.concat([subset_data, sampled_instances]).reset_index().drop(columns=['index'])
-    if (inputs.label == 'cover_type'):
-        balanced_set['cover_type'] = balanced_set['cover_type'].astype(int)
+    sampled_instances = SMOTE(minority, samples_needed, neighbours, majority_len)
+    balanced_set = pd.concat([majority, sampled_instances]).reset_index(drop=True)
+    
+    if (inputs.label == 'Cover_Type'):
+        balanced_set['Cover_Type'] = balanced_set['Cover_Type'].astype(int)
 
-    print(balanced_set['cover_type'].value_counts())
-    balanced_set.to_csv(inputs.output)
+    balanced_set.to_csv(inputs.output, index=False)
     
 if __name__ == '__main__':
     main()
