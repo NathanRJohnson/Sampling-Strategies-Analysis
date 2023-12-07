@@ -12,6 +12,13 @@ from sklearn.preprocessing import MinMaxScaler
 import sys
 import argparse
 
+##################################
+# GAN for generated data (noise data)
+# same as GAN for covertype dataset but with slightly different values to fit the data
+##################################
+
+
+#function to parse the command line arguments
 def parse_args():
     path_to_input = sys.argv[1]
     flag_args = sys.argv[2:]
@@ -23,7 +30,9 @@ def parse_args():
     args = parser.parse_args(flag_args)
     return path_to_input, args
 
-#https://realpython.com/generative-adversarial-networks/ 
+# originally based on tutorial from https://realpython.com/generative-adversarial-networks/ 
+# but layers, activation functions, etc. have been changed to match 
+# discriminator is used to predict if a data point is real or generated
 class Discriminator(nn.Module):
     def __init__(self):
         super().__init__()
@@ -41,7 +50,7 @@ class Discriminator(nn.Module):
     def forward(self, data):
         return self.model(data)
 
-
+# generator is used to create new data points
 class Generator(nn.Module):
     def __init__(self):
         super().__init__()
@@ -57,6 +66,7 @@ class Generator(nn.Module):
         return self.model(data)
     
 
+#prepares data for the model
 def prepData(data, labels, batch_size, scaler):
     labels = np.array(labels)
     data = scaler.fit_transform(data)
@@ -70,58 +80,52 @@ def main():
     #random generator seed - used so the results can be recreated even with random generation
     torch.manual_seed(10)
 
-    #Creating the dataframe to hold the data from covtype.data
-    # WA_columns = ['wilderness_A_' + str(x + 1) for x in range(4)]
-    # soil_columns = ['soil_T_' + str(x + 1) for x in range(40)]
+    #read data from csv, extract minority class data
+    data = pd.read_csv(path_to_input)
+    minority_class_data = data[data[inputs.label] == inputs.minority].reset_index(drop=True)
 
-    # columns = ["elevation", "aspect", "slope", "hydro_horizontal_dist", "hydro_vertical_dist", "road_horizontal_dist" "shade_9am", "shade_noon", "shade_3pm", "firepoints_horizontal_dist"] + WA_columns + soil_columns + ["cover_type"]
-
-    # whole_dataset = pd.read_csv(path_to_input, header=None, names=columns)
-
-    subset_data = pd.read_csv(path_to_input)
-    minority_class_data = subset_data[subset_data[inputs.label] == inputs.minority].reset_index(drop=True)
-
-    print("# of samples with ",inputs.label, " ", inputs.minority, ": ", len(subset_data[subset_data[inputs.label] == inputs.minority]))
-    print("# of samples with ", inputs.label, " ", inputs.majority, ": ", len(subset_data[subset_data[inputs.label] == inputs.majority]))
-
-    subset_labels = subset_data[inputs.label]
+    labels = data[inputs.label]
     minority_class_labels = minority_class_data[inputs.label]
 
-    subset_data = subset_data.drop(columns=[inputs.label])
-    subset_data = np.array(subset_data)
-    #subset_data = preprocessing.normalize(subset_data)
+    data = data.drop(columns=[inputs.label])
+    data = np.array(data)
+    
     minority_class_data = minority_class_data.drop(columns=[inputs.label])
 
     minority_train_x, minority_test_x, minority_train_labels, minority_test_labels = train_test_split(minority_class_data, minority_class_labels, test_size = 0.25, random_state=10)
 
-    #random forest classifier
-    print("size of train: ", len(minority_train_x))
+    #determining batch size based on the size of the train set
     batch_size = 50
     while(len(minority_train_x)%batch_size != 0):
         batch_size+=1
-    print(batch_size)
+
+    #preprocessing data 
     minority_train_x = np.array(minority_train_x)
     minority_test_x = np.array(minority_test_x)
     scaler = MinMaxScaler(feature_range=(0, 1))
     train_x = prepData(minority_train_x, minority_train_labels, batch_size, scaler)
     test_x = prepData(minority_test_x, minority_test_labels, batch_size, scaler)
+    
+    #initialize discriminator and generator
     disc = Discriminator()
     gen = Generator()
 
+    #set parameters
     num_of_batches = len(train_x)
-    print("number of batches: ", len(train_x))
     lr = 0.0001
     epochs = 200
     loss_fn = nn.BCELoss()
     opt_disc = torch.optim.Adam(disc.parameters(), lr=lr)
     opt_gen = torch.optim.Adam(gen.parameters(), lr=lr)
 
+    #training discriminator and generator
     for e in range(epochs):
         for n, (true_data,i)in enumerate(train_x):
             true_data = true_data.float()
-            # Data for training the discriminator
+            
+            # generate data using generator to use to train discriminator
             true_data_labels = torch.zeros((batch_size, 1))
-            sample_spaces = torch.randn((batch_size, np.shape(subset_data)[1]))
+            sample_spaces = torch.randn((batch_size, np.shape(data)[1]))
             gen_data = gen(sample_spaces)
             gen_data_labels = torch.ones((batch_size, 1))
             all_data = torch.cat((true_data, gen_data))
@@ -129,7 +133,7 @@ def main():
                 (true_data_labels, gen_data_labels)
             )
 
-            # Training the discriminator
+            # train the discriminator
             disc.zero_grad()
             output_disc = disc(all_data)
             loss_disc = loss_fn(
@@ -137,10 +141,10 @@ def main():
             loss_disc.backward()
             opt_disc.step()
 
-            # Data for training the generator
-            sample_spaces = torch.randn((batch_size, np.shape(subset_data)[1]))
+            # create empty space for generator
+            sample_spaces = torch.randn((batch_size, np.shape(data)[1]))
 
-            # Training the generator
+            # train the generator
             gen.zero_grad()
             gen_data = gen(sample_spaces)
             output_disc_gen = disc(gen_data)
@@ -150,30 +154,29 @@ def main():
             loss_gen.backward()
             opt_gen.step()
 
-            # Show loss
+            # print loss for discriminator and generator
+            # used to evaluate - trying to balance disc loss and gen loss
             if e % 10 == 0 and n == num_of_batches - 1:
                 print(f"Epoch: {e} Loss D.: {loss_disc}")
                 print(f"Epoch: {e} Loss G.: {loss_gen}")
 
 
 
-    #Evaluating performance of generator
-    #Creates a batch of samples using generator then compares it to batches of real data.
-    #Compares each column/feature using the ttest. Plots the p value on a graph with 0.05 line drawn
-    sample_spaces = torch.randn((batch_size, np.shape(subset_data)[1]))
+    # balancing the dataset - generate data until the dataset is even
+    # not exactly same amount in minority and majority because it is generated in batches. 
+    sample_spaces = torch.randn((batch_size, np.shape(data)[1]))
     gen_data = gen(sample_spaces)
-    while len(subset_labels[subset_labels == inputs.minority])< len(subset_labels[subset_labels == inputs.majority]):
-        sample_spaces = torch.randn((batch_size, np.shape(subset_data)[1]))
+    while len(labels[labels == inputs.minority])< len(labels[labels == inputs.majority]):
+        sample_spaces = torch.randn((batch_size, np.shape(data)[1]))
         gen_data = gen(sample_spaces)
         gen_data = scaler.inverse_transform(gen_data.detach().numpy())
-        subset_labels = pd.concat([subset_labels,pd.Series(inputs.minority, index=range(len(gen_data)))])
-        subset_data = np.concatenate((subset_data,gen_data))
-    subset_data_df = pd.DataFrame(subset_data, columns =minority_class_data.columns)
-    subset_data_df[inputs.label] = subset_labels.values
-    subset_data = subset_data[:len(subset_labels[subset_labels == inputs.majority])*2] #removing the excess minority samples created.
-    print(inputs.minority, ": ", len(subset_data_df[subset_data_df[inputs.label] == inputs.minority]), inputs.majority,": ", len(subset_data_df[subset_data_df[inputs.label] == inputs.majority]))
-    
-    subset_data_df.to_csv(inputs.output, index=False)
+        labels = pd.concat([labels,pd.Series(inputs.minority, index=range(len(gen_data)))])
+        data = np.concatenate((data,gen_data))
+    data_df = pd.DataFrame(data, columns =minority_class_data.columns)
+    data_df[inputs.label] = labels.values
+
+    #save data to csv
+    data_df.to_csv(inputs.output, index=False)
 
 if __name__ == '__main__':
     main()
