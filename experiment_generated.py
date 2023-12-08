@@ -34,7 +34,7 @@ def main():
     svc_results_path = f'results/svc_generated/'
 
     #loops through each strategy
-    strategies = ['no_sample', 'oversampling', 'gan_generated', 'nearest_neighbor', 'undersampling'] #, 'naive_bayes']
+    strategies = ['no_sample', 'oversampling', 'gan_generated', 'nearest_neighbor', 'undersampling', 'naive_bayes']
     for strategy in strategies:
         rf_precision[strategy] = {}
         rf_recall[strategy] = {}

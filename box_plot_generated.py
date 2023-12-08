@@ -44,8 +44,6 @@ def make_plots(precision, recall, fscores, delta_fscores, clf):
 
     plt.savefig(f'results/{clf_path}_generated/{clf}_fscore_boxplot_generated.png')
     
-    c
-    
     #delta f score plot
     plt.figure(figsize=(8, 6))
     sns.boxplot(data=delta_fscores)
@@ -181,7 +179,7 @@ def main():
                 svc_precisions_list[strat].append(svc_results['precision'][strat][ratio][noise][0])
                 svc_recalls_list[strat].append(svc_results['recall'][strat][ratio][noise][0])
                 if (strat != "no_sample"):
-                    svc_delta_fscores_list[strat].append(rf_results['fscore'][strat][ratio][noise][0]-rf_results['fscore']['no_sample'][ratio][noise][0]) 
+                    svc_delta_fscores_list[strat].append(svc_results['fscore'][strat][ratio][noise][0]-svc_results['fscore']['no_sample'][ratio][noise][0]) 
 
     
     
@@ -191,7 +189,7 @@ def main():
         'no_sample': 'No Sampling',
         'nearest_neighbor': 'Clustering', 
         'undersampling': 'Undersampling',
-        #'naive_bayes': 'Naive Bayes',
+        'naive_bayes': 'Naive Bayes',
         'oversampling': 'SMOTE',
         'gan_generated': 'GAN'
     }
@@ -202,7 +200,7 @@ def main():
     rf_delta_fscore = pd.DataFrame.from_dict(rf_delta_fscores_list, orient='index').transpose().rename(columns=column_label_map)
 
 
-    #make_plots(rf_precision, rf_recall, rf_fscore, rf_delta_fscore, "Random Forest")
+    make_plots(rf_precision, rf_recall, rf_fscore, rf_delta_fscore, "Random Forest")
 
     svc_fscore = pd.DataFrame.from_dict(svc_fscores_list, orient='index').transpose().rename(columns=column_label_map)
     svc_precision = pd.DataFrame.from_dict(svc_precisions_list, orient='index').transpose().rename(columns=column_label_map)
@@ -210,7 +208,7 @@ def main():
     svc_delta_fscore = pd.DataFrame.from_dict(svc_delta_fscores_list, orient='index').transpose().rename(columns=column_label_map)
 
 
-    #make_plots(svc_precision, svc_recall, svc_fscore, svc_delta_fscore, "Support Vector Machine")
+    make_plots(svc_precision, svc_recall, svc_fscore, svc_delta_fscore, "Support Vector Machine")
 
 if __name__ == '__main__':
     main()

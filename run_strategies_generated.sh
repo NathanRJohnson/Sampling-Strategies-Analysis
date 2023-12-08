@@ -19,18 +19,18 @@ do
     IFS='/';
     read -a filename <<< "$FILE";
 
-    mkdir -p data/$out_path/$NN
-    python3 $strat_path/$NN.py ${filename[0]}/${filename[1]}/${filename[2]} -l $label -M $majority -m $minority -o data/$out_path/$NN/balanced_${filename[2]}
+    # mkdir -p data/$out_path/$NN
+    # python3 $strat_path/$NN.py ${filename[0]}/${filename[1]}/${filename[2]} -l $label -M $majority -m $minority -o data/$out_path/$NN/balanced_${filename[2]}
 
-    #mkdir -p data/$out_path/$NB
-    #python3 $strat_path/$NB.py ${filename[0]}/${filename[1]}/${filename[2]} -l $label -M $majority -m $minority -o data/$out_path/$NB/balanced_${filename[2]}
+    mkdir -p data/$out_path/$NB
+    python3 $strat_path/$NB.py ${filename[0]}/${filename[1]}/${filename[2]} -g -l $label -M $majority -m $minority -o data/$out_path/$NB/balanced_${filename[2]}
 
-    mkdir -p data/$out_path/$RU
-    python3 $strat_path/$RU.py ${filename[0]}/${filename[1]}/${filename[2]} -l $label -M $majority -m $minority -o data/$out_path/$RU/balanced_${filename[2]}
+    # mkdir -p data/$out_path/$RU
+    # python3 $strat_path/$RU.py ${filename[0]}/${filename[1]}/${filename[2]} -l $label -M $majority -m $minority -o data/$out_path/$RU/balanced_${filename[2]}
 
-    mkdir -p data/$out_path/$GN
-    python3 $strat_path/$GN.py ${filename[0]}/${filename[1]}/${filename[2]} -l $label -M $majority -m $minority -o data/$out_path/$GN/balanced_${filename[2]}
+    # mkdir -p data/$out_path/$GN
+    # python3 $strat_path/$GN.py ${filename[0]}/${filename[1]}/${filename[2]} -l $label -M $majority -m $minority -o data/$out_path/$GN/balanced_${filename[2]}
 
-    mkdir -p data/$out_path/$SM
-    python3 $strat_path/$SM.py ${filename[0]}/${filename[1]}/${filename[2]} -l $label -M $majority -m $minority -o data/$out_path/$SM/balanced_${filename[2]}
+    # mkdir -p data/$out_path/$SM
+    # python3 $strat_path/$SM.py ${filename[0]}/${filename[1]}/${filename[2]} -l $label -M $majority -m $minority -o data/$out_path/$SM/balanced_${filename[2]}
 done
