@@ -20,8 +20,8 @@ def main():
   df = pd.read_csv(path_to_input)
 
   # split data in to maj min 
-  majority = df[df['Cover_Type'] == args.majority] #3
-  minority = df[df['Cover_Type'] == args.minority] #4
+  majority = df[df[args.label] == args.majority] #3
+  minority = df[df[args.label] == args.minority] #4
   # print(len(majority), len(minority))
   
   # undersample maj
