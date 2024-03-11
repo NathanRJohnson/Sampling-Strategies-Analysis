@@ -63,7 +63,7 @@ def main():
     'no_sample': 'No Sampling',
     'nearest_neighbor': 'Clustering', 
     'undersampling': 'Undersampling',
-    'naive_bayes': 'Naive Bayes',
+    'naive_bayes_95': 'Naive Bayes',
     'oversampling': 'SMOTE',
     'gan': 'GAN'
   }

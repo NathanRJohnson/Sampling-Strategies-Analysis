@@ -31,7 +31,7 @@ def main():
   rf_results_path = f'results/random_forest/'
   svc_results_path = f'results/svc/'
 
-  strategies = ['naive_bayes_50', 'naive_bayes_95']
+  strategies = ['no_sample', 'oversampling', 'gan', 'nearest_neighbor', 'undersampling', 'naive_bayes_95']
   for strategy in strategies:
     rf_precision[strategy] = []
     rf_recall[strategy] = []
